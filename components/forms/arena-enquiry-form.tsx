@@ -12,6 +12,8 @@ type FormOutput = z.output<typeof arenaEnquirySchema>;
 
 export function ArenaEnquiryForm({ categories = [] }: { categories?: string[] }) {
   const [referenceNo, setReferenceNo] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [otherCategory, setOtherCategory] = useState("");
   const {
     register,
     handleSubmit,
@@ -19,12 +21,19 @@ export function ArenaEnquiryForm({ categories = [] }: { categories?: string[] })
     formState: { errors, isSubmitting },
   } = useForm<FormInput, unknown, FormOutput>({ resolver: zodResolver(arenaEnquirySchema) });
 
+  function toggleCategory(c: string) {
+    setSelectedCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  }
+
   async function onSubmit(data: FormOutput) {
+    const categoryList = [...selectedCategories];
+    if (otherCategory.trim()) categoryList.push(otherCategory.trim());
+    const payload = { ...data, robotCategory: categoryList.join(", ") || undefined };
     try {
       const res = await fetch("/api/arena-enquiries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -34,6 +43,8 @@ export function ArenaEnquiryForm({ categories = [] }: { categories?: string[] })
       setReferenceNo(json.referenceNo);
       toast.success("Enquiry sent successfully!");
       reset();
+      setSelectedCategories([]);
+      setOtherCategory("");
     } catch {
       toast.error("Network error. Please try again.");
     }
@@ -88,19 +99,36 @@ export function ArenaEnquiryForm({ categories = [] }: { categories?: string[] })
           <label className="label">Number of Participants</label>
           <input className="input" type="number" min={1} {...register("participants")} />
         </div>
-        <div>
-          <label className="label">Arena Category</label>
+        <div className="sm:col-span-2">
+          <label className="label">Arena Category (select all that apply)</label>
           {categories.length > 0 ? (
-            <select className="input" {...register("robotCategory")} defaultValue="">
-              <option value="">Select a category</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-          ) : (
-            <input className="input" placeholder="e.g. 8kg, 15kg, Antweight" {...register("robotCategory")} />
-          )}
+            <div className="flex flex-wrap gap-2">
+              {categories.map((c) => {
+                const active = selectedCategories.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleCategory(c)}
+                    aria-pressed={active}
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                      active
+                        ? "border-accent bg-accent text-accent-foreground"
+                        : "border-border bg-surface-2 text-muted hover:border-accent/50"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <input
+            className="input mt-3"
+            placeholder="Other category (optional)"
+            value={otherCategory}
+            onChange={(e) => setOtherCategory(e.target.value)}
+          />
         </div>
         <div>
           <label className="label">Expected Number of Robots</label>

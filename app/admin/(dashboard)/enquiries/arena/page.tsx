@@ -21,6 +21,7 @@ export default function ArenaEnquiriesPage() {
           label: "Event Date",
           render: (r) => (r.eventDate ? new Date(r.eventDate as string).toLocaleDateString() : "—"),
         },
+        { key: "robotCategory", label: "Arena Category", render: (r) => (r.robotCategory as string) || "—" },
         { key: "expectedRobots", label: "Robots" },
         {
           key: "createdAt",

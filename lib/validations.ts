@@ -23,7 +23,7 @@ export const arenaEnquirySchema = z.object({
   eventName: z.string().max(160).optional().or(z.literal("")),
   eventDate: z.string().optional().or(z.literal("")),
   participants: optionalPositiveInt(),
-  robotCategory: z.string().max(120).optional().or(z.literal("")),
+  robotCategory: z.string().max(300).optional().or(z.literal("")),
   expectedRobots: optionalPositiveInt(),
   arenaDuration: z.string().max(120).optional().or(z.literal("")),
   location: z.string().max(200).optional().or(z.literal("")),

@@ -127,7 +127,7 @@ export const DEFAULT_SETTINGS: {
     baseSheet: "5mm MS (Mild Steel) sheet",
     sidePolycarbonate: "10mm thick polycarbonate side panels",
     topPolycarbonate: "6mm thick polycarbonate top cover",
-    categories: "8kg, 15kg, 30kg, 60kg",
+    categories: "8kg, 15kg, 30kg, 60kg, 3lbs, RoboSoccer, RoboHockey, RoboRace",
   },
   media: {
     heroImageUrl: "",

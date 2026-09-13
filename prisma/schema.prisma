@@ -52,7 +52,7 @@ model ArenaEnquiry {
   eventName      String?
   eventDate      DateTime?
   participants   Int?
-  robotCategory  String?
+  robotCategory  String?  @db.Text
   expectedRobots Int?
   arenaDuration  String?
   location       String?
