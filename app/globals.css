@@ -1,26 +1,375 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0b0d;
+  --surface: #131519;
+  --surface-2: #1b1e24;
+  --border: #262b33;
+  --foreground: #e9ebee;
+  --muted: #98a1ad;
+  --accent: #ff6a1a;
+  --accent-hover: #ff7f3d;
+  --accent-foreground: #0a0b0d;
+  --primary: #ff6a1a;
+  --primary-hover: #ff7f3d;
+  --primary-foreground: #0a0b0d;
+  --steel: #4a5568;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #eab308;
+  --card-radius: 0.5rem;
+  --card-border: 1px solid var(--border);
+  --card-shadow: none;
+}
+
+/* Public marketing site theme: light background, navy primary + orange
+   accent. Scoped to a wrapper class (applied in app/(site)/layout.tsx) so
+   the admin dashboard keeps the dark theme untouched — both read the same
+   underlying tokens, so most components need no per-theme code at all. */
+.theme-light {
+  --background: #f6f8fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f8;
+  --border: #e3e8f0;
+  --foreground: #16233f;
+  --muted: #64748b;
+  --accent: #f97316;
+  --accent-hover: #ea580c;
+  --accent-foreground: #ffffff;
+  --primary: #1e3a8a;
+  --primary-hover: #17296b;
+  --primary-foreground: #ffffff;
+  --card-radius: 1rem;
+  --card-border: 1px solid var(--border);
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-steel: var(--steel);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-orbitron);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* Custom component classes live in @layer components so Tailwind's utility
+   layer (e.g. bg-primary, text-accent) can still override them when both are
+   applied to the same element — unlayered CSS would otherwise always win
+   over layered utilities regardless of source order or specificity. */
+@layer components {
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* subtle industrial grid backdrop used behind hero / section headers */
+.grid-backdrop {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.btn,
+.btn-accent,
+.btn-primary,
+.btn-outline,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.btn:disabled,
+.btn-accent:disabled,
+.btn-primary:disabled,
+.btn-outline:disabled,
+.btn-ghost:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.btn-accent:hover {
+  background: var(--accent-hover);
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--foreground);
+}
+.btn-ghost:hover {
+  background: var(--border);
+}
+
+.card {
+  border-radius: var(--card-radius);
+  border: var(--card-border);
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input::placeholder {
+  color: var(--muted);
+}
+.input:focus {
+  border-color: var(--accent);
+}
+
+.label {
+  margin-bottom: 0.375rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border-width: 1px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.section-eyebrow {
+  margin-bottom: 0.75rem;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+/* Infinite-loop client/partner logo strip */
+.logo-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.logo-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: logo-marquee-scroll 32s linear infinite;
+}
+
+.logo-marquee:hover .logo-marquee-track {
+  animation-play-state: paused;
+}
+
+.logo-marquee-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 10rem;
+  height: 6.5rem;
+  margin: 0 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: #f4f1ea;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s;
+}
+
+.logo-marquee-item img {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.logo-marquee-item:hover {
+  transform: translateY(-3px);
+}
+
+@keyframes logo-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* exactly one strip-width (the list is rendered twice) */
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-marquee-track {
+    animation: none;
+  }
+}
+
+/* ---------- Combat-robotics visual identity ---------- */
+
+/* Diagonal hazard/caution stripe — used as thin section-edge accents */
+.hazard-stripe {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--accent) 0px,
+    var(--accent) 14px,
+    #0a0b0d 14px,
+    #0a0b0d 28px
+  );
+}
+
+/* Slow cinematic zoom on a hero background image */
+.ken-burns {
+  animation: ken-burns 22s ease-in-out infinite alternate;
+}
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.1);
+  }
+}
+
+/* Horizontal scan-line sweep overlay, evokes an arena camera feed */
+.scan-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(255, 106, 26, 0.08) 49%,
+    rgba(255, 106, 26, 0.22) 50%,
+    rgba(255, 106, 26, 0.08) 51%,
+    transparent 100%
+  );
+  background-size: 100% 260%;
+  animation: scan-sweep 6s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes scan-sweep {
+  from {
+    background-position: 0 -160%;
+  }
+  to {
+    background-position: 0 160%;
+  }
+}
+
+/* Pulsing glow ring, used behind hero CTAs / live-status style badges */
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  animation: pulse-ring 2.4s ease-out infinite;
+}
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+}
+
+/* Thin scrolling text ticker (weight classes / category tags) */
+.tag-ticker {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tag-ticker-track {
+  display: inline-flex;
+  width: max-content;
+  animation: logo-marquee-scroll 26s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns,
+  .scan-sweep,
+  .pulse-ring::before,
+  .tag-ticker-track {
+    animation: none;
+  }
+}
+
+} /* end @layer components */

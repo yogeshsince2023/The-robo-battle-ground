@@ -1,0 +1,12 @@
+-- AlterTable
+ALTER TABLE `invoice` ADD COLUMN `billToPincode` VARCHAR(191) NULL,
+    ADD COLUMN `discountAmount` DOUBLE NOT NULL DEFAULT 0,
+    ADD COLUMN `discountType` VARCHAR(191) NOT NULL DEFAULT 'FLAT',
+    ADD COLUMN `discountValue` DOUBLE NOT NULL DEFAULT 0,
+    ADD COLUMN `incomeTransactionId` VARCHAR(191) NULL;
+
+-- AlterTable
+ALTER TABLE `quotation` ADD COLUMN `billToPincode` VARCHAR(191) NULL,
+    ADD COLUMN `discountAmount` DOUBLE NOT NULL DEFAULT 0,
+    ADD COLUMN `discountType` VARCHAR(191) NOT NULL DEFAULT 'FLAT',
+    ADD COLUMN `discountValue` DOUBLE NOT NULL DEFAULT 0;

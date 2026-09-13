@@ -1,0 +1,409 @@
+// Prisma schema for RoboWar Arena business platform
+// Running on MySQL (local MySQL80 instance). Long free-text fields are
+// annotated @db.Text because Prisma's default String maps to VARCHAR(191)
+// on MySQL, which is too short for descriptions/messages/JSON blobs.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ADMIN / AUTH ----------
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ---------- ARENA ----------
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model ArenaEnquiry {
+  id             String        @id @default(cuid())
+  referenceNo    String        @unique
+  name           String
+  company        String?
+  email          String
+  phone          String
+  eventName      String?
+  eventDate      DateTime?
+  participants   Int?
+  robotCategory  String?
+  expectedRobots Int?
+  arenaDuration  String?
+  location       String?
+  message        String?       @db.Text
+  status         EnquiryStatus @default(NEW)
+  adminNotes     String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// ---------- TRAINING ----------
+
+model TrainingCourse {
+  id                   String   @id @default(cuid())
+  name                 String
+  slug                 String   @unique
+  shortDescription     String   @db.Text
+  detailedDescription  String   @db.Text
+  duration             String
+  mode                 String
+  fees                 String
+  eligibility          String?
+  skillsCovered        String?  @db.Text // comma separated
+  modules              String?  @db.Text // JSON string of module list
+  certificateAvailable Boolean  @default(true)
+  status               String   @default("Active") // Active / Inactive
+  displayOrder         Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  enquiries TrainingEnquiry[]
+}
+
+model TrainingEnquiry {
+  id             String          @id @default(cuid())
+  referenceNo    String          @unique
+  studentName    String
+  email          String
+  phone          String
+  organization   String?
+  courseId       String?
+  course         TrainingCourse? @relation(fields: [courseId], references: [id])
+  preferredBatch String?
+  trainingMode   String?
+  message        String?         @db.Text
+  status         EnquiryStatus   @default(NEW)
+  adminNotes     String?         @db.Text
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+// ---------- CERTIFICATES ----------
+
+enum CertificateStatus {
+  VALID
+  REVOKED
+  EXPIRED
+}
+
+model Certificate {
+  id                 String            @id @default(cuid())
+  certificateId      String            @unique // e.g. RB-TRAIN-2026-00125
+  studentName        String
+  courseName         String
+  trainingDuration   String?
+  issueDate          DateTime
+  completionDate     DateTime?
+  status             CertificateStatus @default(VALID)
+  certificateFileUrl String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+// ---------- MACHINING ----------
+
+model MachiningService {
+  id           String   @id @default(cuid())
+  category     String // CNC / VMC / 3D_PRINTING
+  title        String
+  description  String   @db.Text
+  materials    String?  @db.Text
+  applications String?  @db.Text
+  capabilities String?  @db.Text
+  displayOrder Int      @default(0)
+  status       String   @default("Active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum QuotationRequestStatus {
+  NEW
+  UNDER_REVIEW
+  QUOTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model MachiningRequest {
+  id                   String                 @id @default(cuid())
+  referenceNo          String                 @unique
+  name                 String
+  company              String?
+  email                String
+  phone                String
+  serviceType          String // CNC / VMC / 3D Printing
+  material             String?
+  quantity             Int?
+  requiredDeliveryDate DateTime?
+  tolerance            String?
+  instructions         String?                @db.Text
+  status               QuotationRequestStatus @default(NEW)
+  quotationAmount      Float?
+  estimatedDelivery    String?
+  adminNotes           String?                @db.Text
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  files UploadedFile[]
+}
+
+model UploadedFile {
+  id                 String            @id @default(cuid())
+  originalName       String
+  storedName         String
+  mimeType           String
+  size               Int
+  machiningRequestId String?
+  machiningRequest   MachiningRequest? @relation(fields: [machiningRequestId], references: [id], onDelete: Cascade)
+  createdAt          DateTime          @default(now())
+}
+
+// ---------- PROJECTS ----------
+
+model Project {
+  id                  String   @id @default(cuid())
+  name                String
+  slug                String   @unique
+  category            String
+  shortDescription    String   @db.Text
+  detailedDescription String?  @db.Text
+  year                String?
+  technologies        String?  @db.Text // comma separated
+  clientOrEvent       String?
+  coverImageUrl       String?
+  status              String   @default("Published") // Published / Draft
+  displayOrder        Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  images ProjectImage[]
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  caption   String?
+  createdAt DateTime @default(now())
+}
+
+// ---------- CONTACT ----------
+
+enum ContactStatus {
+  NEW
+  READ
+  RESPONDED
+  ARCHIVED
+}
+
+model ContactMessage {
+  id          String        @id @default(cuid())
+  referenceNo String        @unique
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String        @db.Text
+  status      ContactStatus @default(NEW)
+  adminNotes  String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+// ---------- ACCOUNTING (PRIVATE / ADMIN ONLY) ----------
+
+model IncomeTransaction {
+  id              String   @id @default(cuid())
+  date            DateTime
+  amount          Float
+  source          String // Arena Rental / Training / Machining / Project / Sponsorship / Other
+  description     String?  @db.Text
+  paymentMethod   String?
+  referenceNumber String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ExpenseTransaction {
+  id              String   @id @default(cuid())
+  date            DateTime
+  amount          Float
+  paidTo          String?
+  category        String // Material / Transport / Equipment / Salary / Event Expense / Maintenance / Other
+  description     String?  @db.Text
+  paymentMethod   String?
+  referenceNumber String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Partner {
+  id        String   @id @default(cuid())
+  name      String
+  slotLabel String   @unique // Partner 1 / Partner 2 / Partner 3 / Partner 4
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions PartnerTransaction[]
+}
+
+model PartnerTransaction {
+  id              String   @id @default(cuid())
+  partnerId       String
+  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  date            DateTime
+  amount          Float
+  reason          String?
+  paymentMethod   String?
+  referenceNumber String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+}
+
+// ---------- SITE SETTINGS / CONTENT ----------
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text // JSON string
+  updatedAt DateTime @updatedAt
+}
+
+model Faq {
+  id           String   @id @default(cuid())
+  category     String // Arena / Training / Machining / General
+  question     String
+  answer       String   @db.Text
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model ArenaPhoto {
+  id           String   @id @default(cuid())
+  url          String
+  caption      String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+// ---------- AUDIT LOG ----------
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String? // AdminUser.id — nullable so a deleted admin's history survives
+  actorName   String // snapshot at the time of the action, in case the admin is later renamed/deleted
+  actorEmail  String
+  action      String // e.g. LOGIN, LOGIN_FAILED, LOGOUT, CREATE, UPDATE, DELETE
+  entityType  String // e.g. Project, Certificate, Settings, Income, Partner
+  entityId    String?
+  description String?  @db.Text
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType])
+  @@index([actorEmail])
+}
+
+// ---------- BILLING (INVOICES & QUOTATIONS) ----------
+
+model Invoice {
+  id                       String   @id @default(cuid())
+  invoiceNumber            String   @unique // e.g. "2026-27/1"
+  financialYear            String // e.g. "2026-27" — used to compute the next sequence number
+  sequence                 Int
+  date                     DateTime
+  dueDate                  DateTime?
+  billToName               String
+  billToAddress            String   @db.Text
+  billToPincode            String?
+  billToGstin              String?
+  billToState              String?
+  placeOfSupply            String?
+  items                    String   @db.Text // JSON: [{name, hsnSac, quantity, pricePerUnit, gstRate}]
+  subTotal                 Float
+  discountType             String   @default("FLAT") // FLAT or PERCENT
+  discountValue            Float    @default(0)
+  discountAmount           Float    @default(0)
+  cgstAmount               Float    @default(0)
+  sgstAmount               Float    @default(0)
+  igstAmount               Float    @default(0)
+  totalTax                 Float
+  totalAmount              Float
+  receivedAmount           Float    @default(0)
+  balanceAmount            Float
+  amountInWords            String?  @db.Text
+  notes                    String?  @db.Text
+  status                   String   @default("DRAFT") // DRAFT / SENT / PAID / PARTIALLY_PAID / CANCELLED
+  linkedMachiningRequestId String?
+  incomeTransactionId      String? // set when status -> PAID auto-records income; cleared if un-marked
+  createdByEmail           String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([financialYear])
+}
+
+model Quotation {
+  id                       String   @id @default(cuid())
+  quotationNumber          String   @unique // e.g. "QT-2026-27/1"
+  financialYear            String
+  sequence                 Int
+  date                     DateTime
+  validUntil               DateTime?
+  billToName               String
+  billToAddress            String   @db.Text
+  billToPincode            String?
+  billToGstin              String?
+  billToState              String?
+  placeOfSupply            String?
+  items                    String   @db.Text
+  subTotal                 Float
+  discountType             String   @default("FLAT") // FLAT or PERCENT
+  discountValue            Float    @default(0)
+  discountAmount           Float    @default(0)
+  cgstAmount               Float    @default(0)
+  sgstAmount               Float    @default(0)
+  igstAmount               Float    @default(0)
+  totalTax                 Float
+  totalAmount              Float
+  amountInWords            String?  @db.Text
+  notes                    String?  @db.Text
+  status                   String   @default("DRAFT") // DRAFT / SENT / ACCEPTED / REJECTED / EXPIRED
+  linkedMachiningRequestId String?
+  createdByEmail           String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  @@index([financialYear])
+}
