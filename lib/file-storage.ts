@@ -1,19 +1,21 @@
 import { randomUUID } from "crypto";
 import path from "path";
-import { mkdir, writeFile, unlink, readFile } from "fs/promises";
+import { createClient } from "@supabase/supabase-js";
 import {
   ALLOWED_UPLOAD_EXTENSIONS,
   MAX_UPLOAD_SIZE_BYTES,
 } from "@/lib/validations";
 
-// Storage abstraction: files are saved to a private, non-web-accessible directory
-// (UPLOAD_DIR, default: <project>/private-uploads) and served only through the
-// authenticated /api/admin/files/[id] route — never via a predictable public URL.
-// Swap this module for an S3/GCS-backed implementation later without touching callers.
+// Storage abstraction: files are saved to a private Supabase Storage bucket
+// and served only through the authenticated /api/admin/files/[id] route.
+// The bucket must be set to Private in the Supabase dashboard.
 
-const UPLOAD_ROOT = process.env.UPLOAD_DIR
-  ? path.resolve(process.env.UPLOAD_DIR)
-  : path.join(process.cwd(), "private-uploads");
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "machining-uploads";
 
 export function isAllowedFile(fileName: string): boolean {
   const ext = path.extname(fileName).toLowerCase();
@@ -25,14 +27,19 @@ export function isAllowedSize(size: number): boolean {
 }
 
 export async function saveUploadedFile(file: File) {
-  await mkdir(UPLOAD_ROOT, { recursive: true });
-
   const ext = path.extname(file.name).toLowerCase();
   const storedName = `${randomUUID()}${ext}`;
-  const destPath = path.join(UPLOAD_ROOT, storedName);
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(destPath, buffer);
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(storedName, buffer, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (error) throw new Error(`Storage upload failed: ${error.message}`);
 
   return {
     originalName: file.name,
@@ -42,18 +49,18 @@ export async function saveUploadedFile(file: File) {
   };
 }
 
-export async function readStoredFile(storedName: string) {
+export async function readStoredFile(storedName: string): Promise<Buffer> {
   const safeName = path.basename(storedName); // prevent path traversal
-  const filePath = path.join(UPLOAD_ROOT, safeName);
-  return readFile(filePath);
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .download(safeName);
+
+  if (error) throw new Error(`Storage download failed: ${error.message}`);
+  return Buffer.from(await data.arrayBuffer());
 }
 
-export async function deleteStoredFile(storedName: string) {
+export async function deleteStoredFile(storedName: string): Promise<void> {
   const safeName = path.basename(storedName);
-  const filePath = path.join(UPLOAD_ROOT, safeName);
-  try {
-    await unlink(filePath);
-  } catch {
-    // already gone — ignore
-  }
+  // ignore errors — file may already be gone
+  await supabase.storage.from(BUCKET).remove([safeName]);
 }

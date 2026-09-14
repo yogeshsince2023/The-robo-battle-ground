@@ -1,26 +1,31 @@
 // Prisma schema for RoboWar Arena business platform
-// Database: Supabase PostgreSQL (free tier)
-// Connection pooling via Transaction Mode (port 6543) for serverless (Vercel)
-// Direct connection (port 5432) used only for migrations
+// Running on MySQL (local MySQL80 instance). Long free-text fields are
+// annotated @db.Text because Prisma's default String maps to VARCHAR(191)
+// on MySQL, which is too short for descriptions/messages/JSON blobs.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 // ---------- ADMIN / AUTH ----------
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
 
 model AdminUser {
   id           String    @id @default(cuid())
   name         String
   email        String    @unique
   passwordHash String
-  role String @default("ADMIN")
+  role         AdminRole @default(ADMIN)
   active       Boolean   @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
@@ -28,6 +33,14 @@ model AdminUser {
 }
 
 // ---------- ARENA ----------
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
 
 model ArenaEnquiry {
   id             String        @id @default(cuid())
@@ -39,13 +52,13 @@ model ArenaEnquiry {
   eventName      String?
   eventDate      DateTime?
   participants   Int?
-  robotCategory  String?
+  robotCategory  String?  @db.Text
   expectedRobots Int?
   arenaDuration  String?
   location       String?
-  message        String?
-  status String @default("NEW")
-  adminNotes     String?
+  message        String?       @db.Text
+  status         EnquiryStatus @default(NEW)
+  adminNotes     String?       @db.Text
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -56,14 +69,14 @@ model TrainingCourse {
   id                   String   @id @default(cuid())
   name                 String
   slug                 String   @unique
-  shortDescription     String
-  detailedDescription  String
+  shortDescription     String   @db.Text
+  detailedDescription  String   @db.Text
   duration             String
   mode                 String
   fees                 String
   eligibility          String?
-  skillsCovered        String? // comma separated
-  modules              String? // JSON string of module list
+  skillsCovered        String?  @db.Text // comma separated
+  modules              String?  @db.Text // JSON string of module list
   certificateAvailable Boolean  @default(true)
   status               String   @default("Active") // Active / Inactive
   displayOrder         Int      @default(0)
@@ -84,14 +97,20 @@ model TrainingEnquiry {
   course         TrainingCourse? @relation(fields: [courseId], references: [id])
   preferredBatch String?
   trainingMode   String?
-  message        String?
-  status String @default("NEW")
-  adminNotes     String?
+  message        String?         @db.Text
+  status         EnquiryStatus   @default(NEW)
+  adminNotes     String?         @db.Text
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 }
 
 // ---------- CERTIFICATES ----------
+
+enum CertificateStatus {
+  VALID
+  REVOKED
+  EXPIRED
+}
 
 model Certificate {
   id                 String            @id @default(cuid())
@@ -101,7 +120,7 @@ model Certificate {
   trainingDuration   String?
   issueDate          DateTime
   completionDate     DateTime?
-  status String @default("VALID")
+  status             CertificateStatus @default(VALID)
   certificateFileUrl String?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
@@ -113,14 +132,23 @@ model MachiningService {
   id           String   @id @default(cuid())
   category     String // CNC / VMC / 3D_PRINTING
   title        String
-  description  String
-  materials    String?
-  applications String?
-  capabilities String?
+  description  String   @db.Text
+  materials    String?  @db.Text
+  applications String?  @db.Text
+  capabilities String?  @db.Text
   displayOrder Int      @default(0)
   status       String   @default("Active")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+enum QuotationRequestStatus {
+  NEW
+  UNDER_REVIEW
+  QUOTED
+  APPROVED
+  REJECTED
+  COMPLETED
 }
 
 model MachiningRequest {
@@ -135,11 +163,11 @@ model MachiningRequest {
   quantity             Int?
   requiredDeliveryDate DateTime?
   tolerance            String?
-  instructions         String?
-  status String @default("NEW")
+  instructions         String?                @db.Text
+  status               QuotationRequestStatus @default(NEW)
   quotationAmount      Float?
   estimatedDelivery    String?
-  adminNotes           String?
+  adminNotes           String?                @db.Text
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
 
@@ -164,10 +192,10 @@ model Project {
   name                String
   slug                String   @unique
   category            String
-  shortDescription    String
-  detailedDescription String?
+  shortDescription    String   @db.Text
+  detailedDescription String?  @db.Text
   year                String?
-  technologies        String? // comma separated
+  technologies        String?  @db.Text // comma separated
   clientOrEvent       String?
   coverImageUrl       String?
   status              String   @default("Published") // Published / Draft
@@ -189,6 +217,13 @@ model ProjectImage {
 
 // ---------- CONTACT ----------
 
+enum ContactStatus {
+  NEW
+  READ
+  RESPONDED
+  ARCHIVED
+}
+
 model ContactMessage {
   id          String        @id @default(cuid())
   referenceNo String        @unique
@@ -196,9 +231,9 @@ model ContactMessage {
   email       String
   phone       String?
   subject     String?
-  message     String
-  status String @default("NEW")
-  adminNotes  String?
+  message     String        @db.Text
+  status      ContactStatus @default(NEW)
+  adminNotes  String?       @db.Text
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
@@ -210,10 +245,10 @@ model IncomeTransaction {
   date            DateTime
   amount          Float
   source          String // Arena Rental / Training / Machining / Project / Sponsorship / Other
-  description     String?
+  description     String?  @db.Text
   paymentMethod   String?
   referenceNumber String?
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -224,10 +259,10 @@ model ExpenseTransaction {
   amount          Float
   paidTo          String?
   category        String // Material / Transport / Equipment / Salary / Event Expense / Maintenance / Other
-  description     String?
+  description     String?  @db.Text
   paymentMethod   String?
   referenceNumber String?
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -251,7 +286,7 @@ model PartnerTransaction {
   reason          String?
   paymentMethod   String?
   referenceNumber String?
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime @default(now())
 }
 
@@ -260,7 +295,7 @@ model PartnerTransaction {
 model SiteSetting {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String // JSON string
+  value     String   @db.Text // JSON string
   updatedAt DateTime @updatedAt
 }
 
@@ -268,7 +303,7 @@ model Faq {
   id           String   @id @default(cuid())
   category     String // Arena / Training / Machining / General
   question     String
-  answer       String
+  answer       String   @db.Text
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
 }
@@ -291,7 +326,7 @@ model AuditLog {
   action      String // e.g. LOGIN, LOGIN_FAILED, LOGOUT, CREATE, UPDATE, DELETE
   entityType  String // e.g. Project, Certificate, Settings, Income, Partner
   entityId    String?
-  description String?
+  description String?  @db.Text
   ipAddress   String?
   createdAt   DateTime @default(now())
 
@@ -310,12 +345,12 @@ model Invoice {
   date                     DateTime
   dueDate                  DateTime?
   billToName               String
-  billToAddress            String
+  billToAddress            String   @db.Text
   billToPincode            String?
   billToGstin              String?
   billToState              String?
   placeOfSupply            String?
-  items                    String // JSON: [{name, hsnSac, quantity, pricePerUnit, gstRate}]
+  items                    String   @db.Text // JSON: [{name, hsnSac, quantity, pricePerUnit, gstRate}]
   subTotal                 Float
   discountType             String   @default("FLAT") // FLAT or PERCENT
   discountValue            Float    @default(0)
@@ -327,8 +362,8 @@ model Invoice {
   totalAmount              Float
   receivedAmount           Float    @default(0)
   balanceAmount            Float
-  amountInWords            String?
-  notes                    String?
+  amountInWords            String?  @db.Text
+  notes                    String?  @db.Text
   status                   String   @default("DRAFT") // DRAFT / SENT / PAID / PARTIALLY_PAID / CANCELLED
   linkedMachiningRequestId String?
   incomeTransactionId      String? // set when status -> PAID auto-records income; cleared if un-marked
@@ -347,12 +382,12 @@ model Quotation {
   date                     DateTime
   validUntil               DateTime?
   billToName               String
-  billToAddress            String
+  billToAddress            String   @db.Text
   billToPincode            String?
   billToGstin              String?
   billToState              String?
   placeOfSupply            String?
-  items                    String
+  items                    String   @db.Text
   subTotal                 Float
   discountType             String   @default("FLAT") // FLAT or PERCENT
   discountValue            Float    @default(0)
@@ -362,8 +397,8 @@ model Quotation {
   igstAmount               Float    @default(0)
   totalTax                 Float
   totalAmount              Float
-  amountInWords            String?
-  notes                    String?
+  amountInWords            String?  @db.Text
+  notes                    String?  @db.Text
   status                   String   @default("DRAFT") // DRAFT / SENT / ACCEPTED / REJECTED / EXPIRED
   linkedMachiningRequestId String?
   createdByEmail           String?
