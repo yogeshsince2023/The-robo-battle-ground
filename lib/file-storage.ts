@@ -8,12 +8,17 @@ import {
 
 // Storage abstraction: files are saved to a private Supabase Storage bucket
 // and served only through the authenticated /api/admin/files/[id] route.
-// The bucket must be set to Private in the Supabase dashboard.
+import { mkdir, writeFile } from "fs/promises";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "machining-uploads";
 
@@ -29,17 +34,24 @@ export function isAllowedSize(size: number): boolean {
 export async function saveUploadedFile(file: File) {
   const ext = path.extname(file.name).toLowerCase();
   const storedName = `${randomUUID()}${ext}`;
-
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(storedName, buffer, {
-      contentType: file.type || "application/octet-stream",
-      upsert: false,
-    });
+  const supabase = getSupabase();
+  if (supabase) {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(storedName, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
 
-  if (error) throw new Error(`Storage upload failed: ${error.message}`);
+    if (error) throw new Error(`Storage upload failed: ${error.message}`);
+  } else {
+    // Local fallback for development without Supabase configured
+    const uploadDir = path.join(process.cwd(), "private-uploads");
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(path.join(uploadDir, storedName), buffer);
+  }
 
   return {
     originalName: file.name,
@@ -51,16 +63,59 @@ export async function saveUploadedFile(file: File) {
 
 export async function readStoredFile(storedName: string): Promise<Buffer> {
   const safeName = path.basename(storedName); // prevent path traversal
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .download(safeName);
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .download(safeName);
 
-  if (error) throw new Error(`Storage download failed: ${error.message}`);
-  return Buffer.from(await data.arrayBuffer());
+    if (error) throw new Error(`Storage download failed: ${error.message}`);
+    return Buffer.from(await data.arrayBuffer());
+  }
+
+  // Local fallback
+  const { readFile } = await import("fs/promises");
+  return readFile(path.join(process.cwd(), "private-uploads", safeName));
 }
 
 export async function deleteStoredFile(storedName: string): Promise<void> {
   const safeName = path.basename(storedName);
-  // ignore errors — file may already be gone
-  await supabase.storage.from(BUCKET).remove([safeName]);
+  const supabase = getSupabase();
+  if (supabase) {
+    await supabase.storage.from(BUCKET).remove([safeName]);
+  } else {
+    const { unlink } = await import("fs/promises");
+    await unlink(path.join(process.cwd(), "private-uploads", safeName)).catch(() => {});
+  }
+}
+
+// Public media upload helper: saves to public Supabase bucket if configured,
+// or writes to public directory on local development.
+export async function savePublicMedia(file: File, folder: string = "uploads"): Promise<string> {
+  const ext = path.extname(file.name).toLowerCase();
+  const storedName = `${randomUUID()}${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const supabase = getSupabase();
+  const mediaBucket = process.env.SUPABASE_MEDIA_BUCKET || "public-media";
+
+  if (supabase) {
+    const { error } = await supabase.storage
+      .from(mediaBucket)
+      .upload(`${folder}/${storedName}`, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
+
+    if (!error) {
+      const { data } = supabase.storage.from(mediaBucket).getPublicUrl(`${folder}/${storedName}`);
+      if (data?.publicUrl) return data.publicUrl;
+    }
+  }
+
+  // Local disk fallback
+  const localDir = path.join(process.cwd(), "public", folder);
+  await mkdir(localDir, { recursive: true });
+  await writeFile(path.join(localDir, storedName), buffer);
+  return `/${folder}/${storedName}`;
 }

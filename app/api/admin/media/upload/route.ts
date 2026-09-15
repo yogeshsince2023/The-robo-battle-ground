@@ -3,12 +3,13 @@ import { randomUUID } from "crypto";
 import path from "path";
 import { mkdir, writeFile } from "fs/promises";
 
+import { savePublicMedia } from "@/lib/file-storage";
+
 const ALLOWED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "site");
 
 // Generic image upload used by site-wide media settings (hero background,
-// navbar logo). Saves under public/uploads/site/ and returns a public URL —
+// navbar logo). Saves via savePublicMedia and returns a public URL —
 // the caller (admin content page) then PUTs that URL into /api/admin/settings.
 export async function POST(req: NextRequest) {
   const formData = await req.formData().catch(() => null);
@@ -25,10 +26,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image too large (max 10MB)." }, { status: 400 });
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  const storedName = `${randomUUID()}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(UPLOAD_DIR, storedName), buffer);
-
-  return NextResponse.json({ url: `/uploads/site/${storedName}` }, { status: 201 });
+  const url = await savePublicMedia(file, "uploads/site");
+  return NextResponse.json({ url }, { status: 201 });
 }

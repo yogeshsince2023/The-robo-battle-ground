@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calendar, Tag, Building2, Cpu, Bot } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -50,14 +50,23 @@ export default async function ProjectDetailPage({
         </h1>
         <p className="mt-4 text-base text-muted">{project.shortDescription}</p>
 
-        <div className="mt-8 flex aspect-video items-center justify-center rounded-lg border border-border bg-surface-2 text-sm text-muted">
-          {project.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={project.coverImageUrl} alt={project.name} className="h-full w-full rounded-lg object-cover" />
-          ) : (
-            "Project Image"
-          )}
-        </div>
+        {project.coverImageUrl ? (
+          <div className="mt-8 flex aspect-video overflow-hidden rounded-lg border border-border bg-surface-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={project.coverImageUrl}
+              alt={project.name}
+              className="h-full w-full rounded-lg object-cover"
+            />
+          </div>
+        ) : (
+          <div className="mt-8 flex aspect-video flex-col items-center justify-center gap-3 rounded-lg border border-border bg-gradient-to-br from-surface-2 to-surface text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Bot size={28} />
+            </span>
+            <span className="text-sm font-semibold text-muted">{project.category}</span>
+          </div>
+        )}
 
         {project.detailedDescription && (
           <div className="mt-8">

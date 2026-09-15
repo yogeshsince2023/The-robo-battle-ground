@@ -29,10 +29,18 @@ export function getClientLogos(): ClientLogo[] {
     return [];
   }
 
-  return files.sort().map((file) => ({
+  const items = files.sort().map((file) => ({
     src: `/clients/${encodeURIComponent(file)}`,
     alt:
       KNOWN_ALT_TEXT[file] ||
       file.replace(/-removebg-preview/i, "").replace(/[-_]+/g, " ").replace(/\.(png|jpe?g|webp|svg)$/i, "").trim(),
   }));
+
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = item.alt.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

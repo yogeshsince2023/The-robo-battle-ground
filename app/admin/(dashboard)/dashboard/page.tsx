@@ -5,6 +5,8 @@ import Link from "next/link";
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -36,6 +38,11 @@ type DashboardData = {
   finance: { totalIncome: number; totalExpense: number; balance: number; partnerWithdrawals: number };
   monthlySeries: { month: string; income: number; expense: number }[];
   recentActivity: { type: string; ref: string; name: string; date: string }[];
+  analytics: {
+    dailyViews: { day: string; views: number }[];
+    topPages: { page: string; views: number }[];
+    totalViews: number;
+  };
 };
 
 function formatINR(n: number) {
@@ -115,6 +122,50 @@ export default function AdminDashboardPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ---------- PAGE VIEWS ANALYTICS ---------- */}
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+        <div className="card lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold">Page Views (last 14 days)</h2>
+            <span className="text-sm text-muted">{data?.analytics.totalViews ?? 0} total</span>
+          </div>
+          <div className="mt-4 h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data?.analytics.dailyViews || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#262b33" />
+                <XAxis dataKey="day" stroke="#98a1ad" fontSize={11} />
+                <YAxis stroke="#98a1ad" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "#1b1e24", border: "1px solid #262b33", borderRadius: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="views"
+                  name="Views"
+                  stroke="#ff6a1a"
+                  strokeWidth={2}
+                  dot={{ r: 3, fill: "#ff6a1a" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="card">
+          <h2 className="font-display text-lg font-bold">Top Pages</h2>
+          <div className="mt-4 space-y-3">
+            {(data?.analytics.topPages || []).map((p) => (
+              <div key={p.page} className="flex items-center justify-between text-sm">
+                <span className="truncate text-muted" title={p.page}>{p.page}</span>
+                <span className="flex-shrink-0 font-medium text-accent">{p.views}</span>
+              </div>
+            ))}
+            {data && data.analytics.topPages.length === 0 && (
+              <p className="text-sm text-muted">No page views yet.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

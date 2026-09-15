@@ -2,6 +2,7 @@ import { Toaster } from "react-hot-toast";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { Analytics } from "@/components/layout/analytics";
 import { getBusinessSettings, getMediaSettings } from "@/lib/settings";
 
 export default async function SiteLayout({
@@ -11,12 +12,29 @@ export default async function SiteLayout({
 }) {
   const business = await getBusinessSettings();
   const media = await getMediaSettings();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: business.businessName,
+    description:
+      "Robot combat arena, robotics training, CNC/VMC machining and 3D printing services.",
+    telephone: business.phone,
+    email: business.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: business.address,
+    },
+    url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  };
+
   return (
     <div className="theme-light min-h-screen bg-background text-foreground">
       <Navbar businessName={business.businessName} logoUrl={media.logoUrl} />
       <main>{children}</main>
       <Footer business={business} />
       <WhatsAppButton whatsapp={business.whatsapp} />
+      <Analytics />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -27,6 +45,10 @@ export default async function SiteLayout({
             boxShadow: "0 4px 12px rgba(16,24,40,0.08)",
           },
         }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </div>
   );

@@ -44,6 +44,13 @@ export const metadata: Metadata = {
     siteName: "The Robo Battleground",
     images: [{ url: "/brand/logo-full.png", width: 1254, height: 1254, alt: "The Robo Battleground" }],
   },
+  manifest: "/manifest.json",
+  twitter: {
+    card: "summary_large_image",
+    title: "The Robo Battleground | Robowar Arena, Training & Precision Machining",
+    description:
+      "Robot combat arena, robotics training, and CNC/VMC/3D printing manufacturing services.",
+  },
   icons: {
     icon: "/icon.png",
     apple: "/apple-icon.png",

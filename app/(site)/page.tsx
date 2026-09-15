@@ -15,6 +15,7 @@ import {
   Boxes,
   Monitor,
   BadgeCheck,
+  Bot,
 } from "lucide-react";
 import { Container, SectionHeading } from "@/components/ui/container";
 import { LogoMarquee } from "@/components/ui/logo-marquee";
@@ -96,8 +97,10 @@ export default async function HomePage() {
   const arenaCategories = arenaSettings.categories.split(",").map((c) => c.trim()).filter(Boolean);
   const clientLogos = getClientLogos();
   const arenaPhotos = await getArenaPhotos();
-  const heroImage = media.heroImageUrl ? { src: media.heroImageUrl, alt: "" } : arenaPhotos[0];
-  const aboutImage = media.aboutImageUrl || arenaPhotos[1]?.src || arenaPhotos[0]?.src;
+  const heroImage = media.heroImageUrl
+    ? { src: media.heroImageUrl, alt: "The Robo Battleground Arena" }
+    : (arenaPhotos[0] || { src: "/arena/arena-1.jpg", alt: "Robowar Arena" });
+  const aboutImage = media.aboutImageUrl || arenaPhotos[1]?.src || arenaPhotos[0]?.src || "/arena/arena-2.jpg";
 
   const trainingCourses = await prisma.trainingCourse.findMany({
     where: { status: "Active" },
@@ -121,8 +124,8 @@ export default async function HomePage() {
       <section className="border-b border-border bg-surface">
         <Container className="grid gap-10 py-14 sm:py-16 lg:grid-cols-2 lg:items-center lg:py-20">
           <Reveal>
-            <span className="section-eyebrow">Your Technical Partner For</span>
-            <h1 className="font-display text-3xl font-extrabold uppercase leading-tight tracking-tight text-primary sm:text-4xl lg:text-5xl">
+            <span className="section-eyebrow">Technical Partner</span>
+            <h1 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl lg:text-5xl">
               Robotics Events &amp; Innovation
             </h1>
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-muted sm:text-base">
@@ -133,7 +136,7 @@ export default async function HomePage() {
                 Book an Arena <ArrowRight size={16} />
               </Link>
               <Link href="#services" className="btn-outline">
-                Explore Our Services
+                Explore Our Services <ArrowRight size={16} />
               </Link>
             </div>
             <div className="mt-10 flex gap-10">
@@ -171,14 +174,14 @@ export default async function HomePage() {
       <section id="services" className="py-16 sm:py-24">
         <Container>
           <Reveal>
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <SectionHeading
                 eyebrow="What We Offer"
                 title="Our Services"
                 description="Complete support for your technical journey."
               />
-              <Link href="/projects" className="btn-outline">
-                View All <ArrowRight size={15} />
+              <Link href="#services" className="btn-outline">
+                Explore Services <ArrowRight size={15} />
               </Link>
             </div>
           </Reveal>
@@ -193,12 +196,17 @@ export default async function HomePage() {
                     <h3 className="font-display text-base font-bold">{s.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted">{s.description}</p>
                     {s.title === "Robotics Arenas" && arenaCategories.length > 0 && (
-                      <div className="mt-3 flex flex-1 flex-wrap gap-1.5 content-start">
-                        {arenaCategories.map((cat) => (
+                      <div className="mt-4 flex flex-1 flex-wrap gap-1.5 content-start pt-1">
+                        {arenaCategories.slice(0, 3).map((cat) => (
                           <span key={cat} className="badge border-primary/20 bg-primary/10 text-primary">
                             {cat}
                           </span>
                         ))}
+                        {arenaCategories.length > 3 && (
+                          <span className="badge border-muted/30 bg-surface-2 text-muted">
+                            +{arenaCategories.length - 3} more
+                          </span>
+                        )}
                       </div>
                     )}
                     {s.title !== "Robotics Arenas" && <div className="flex-1" />}
@@ -221,12 +229,10 @@ export default async function HomePage() {
       <section className="border-y border-border bg-surface py-16 sm:py-24">
         <Container className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <Reveal>
-            {aboutImage ? (
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border shadow-lg">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={aboutImage} alt="" className="h-full w-full object-cover" />
-              </div>
-            ) : null}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={aboutImage} alt={business.businessName} className="h-full w-full object-cover" />
+            </div>
           </Reveal>
           <Reveal delay={0.1}>
             <span className="section-eyebrow">About Us</span>
@@ -261,7 +267,7 @@ export default async function HomePage() {
           <Container>
             <Reveal>
               <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                Our Trusted Clients
+                Trusted Clients
               </p>
             </Reveal>
           </Container>
@@ -349,7 +355,12 @@ export default async function HomePage() {
       <section className="border-t border-border bg-surface py-16 sm:py-24">
         <Container className="grid gap-10 lg:grid-cols-2">
           <Reveal>
-            <SectionHeading eyebrow="From Digital Design to Reality" title="Machining & Fabrication" />
+            <div className="flex items-center justify-between gap-4">
+              <SectionHeading eyebrow="From Digital Design to Reality" title="Machining & Fabrication" />
+              <Link href="/machining" className="btn-outline">
+                Learn More <ArrowRight size={15} />
+              </Link>
+            </div>
             <div className="mt-8 flex items-center justify-between gap-2">
               {MACHINING_STEPS.map((step, i) => (
                 <div key={step.label} className="flex flex-1 items-center">
@@ -365,29 +376,35 @@ export default async function HomePage() {
                 </div>
               ))}
             </div>
-            <Link href="/machining" className="btn-accent mt-8 inline-flex">
-              Learn More <ArrowRight size={16} />
-            </Link>
           </Reveal>
 
           {projects.length > 0 && (
             <Reveal delay={0.1}>
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <SectionHeading eyebrow="Our Work" title="Projects & Achievements" />
                 <Link href="/projects" className="btn-outline">
                   View All <ArrowRight size={15} />
                 </Link>
               </div>
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {projects.map((p) => (
                   <Link key={p.id} href={`/projects/${p.slug}`} className="group">
-                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border">
+                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-gradient-to-br from-surface-2 to-surface flex items-center justify-center">
                       {p.coverImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.coverImageUrl} alt={p.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                        <img
+                          src={p.coverImageUrl}
+                          alt={p.name}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-surface-2 text-xs text-muted">
-                          {p.category}
+                        <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <Bot size={20} />
+                          </span>
+                          <span className="rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                            {p.category}
+                          </span>
                         </div>
                       )}
                     </div>

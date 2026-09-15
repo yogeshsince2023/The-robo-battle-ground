@@ -6,9 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
+import { savePublicMedia } from "@/lib/file-storage";
+
 const ALLOWED_IMAGE_EXT = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
-const ARENA_DIR = path.join(process.cwd(), "public", "arena");
 
 export async function GET() {
   const photos = await prisma.arenaPhoto.findMany({ orderBy: { displayOrder: "asc" } });
@@ -30,14 +31,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image too large (max 10MB)." }, { status: 400 });
   }
 
-  await mkdir(ARENA_DIR, { recursive: true });
-  const storedName = `${randomUUID()}${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(ARENA_DIR, storedName), buffer);
-
+  const url = await savePublicMedia(file, "arena");
   const count = await prisma.arenaPhoto.count();
   const photo = await prisma.arenaPhoto.create({
-    data: { url: `/arena/${storedName}`, displayOrder: count },
+    data: { url, displayOrder: count },
   });
 
   const admin = await getCurrentAdmin();

@@ -226,6 +226,20 @@ async function main() {
   }
   console.log(`${projects.length} demo projects seeded.`);
 
+  // ---------- Arena Photos ----------
+  const arenaPhotosCount = await prisma.arenaPhoto.count();
+  if (arenaPhotosCount === 0) {
+    await prisma.arenaPhoto.createMany({
+      data: [
+        { url: "/arena/arena-1.jpg", caption: "Robowar Arena - Main Stage", displayOrder: 0 },
+        { url: "/arena/arena-2.jpg", caption: "Robowar Arena - Combat Enclosure", displayOrder: 1 },
+        { url: "/arena/arena-3.jpg", caption: "Robowar Arena - Testing & Pit Area", displayOrder: 2 },
+        { url: "/arena/arena-4.jpg", caption: "Robowar Arena - High-Strength Polycarbonate", displayOrder: 3 },
+      ],
+    });
+    console.log("Default arena photos seeded.");
+  }
+
   // ---------- Certificates ----------
   await prisma.certificate.upsert({
     where: { certificateId: "RB-TRAIN-2026-00125" },

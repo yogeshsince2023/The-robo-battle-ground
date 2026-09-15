@@ -1,0 +1,13 @@
+{
+  "name": "The Robo Battleground",
+  "short_name": "RoboBattleground",
+  "description": "Robowar Arena, Robotics Training & Precision CNC/VMC Machining",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f8fb",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    { "src": "/brand/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/favicon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

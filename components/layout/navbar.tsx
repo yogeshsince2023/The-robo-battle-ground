@@ -3,17 +3,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Menu, X, ChevronDown } from "lucide-react";
 
-const NAV_LINKS = [
+const PRIMARY_LINKS = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/arena", label: "Arena" },
-  { href: "/training", label: "Training" },
-  { href: "/machining", label: "Machining" },
+];
+
+const SERVICE_LINKS = [
+  { href: "/training", label: "Training Programs", desc: "Robotics, IoT, PLC & embedded courses" },
+  { href: "/machining", label: "Machining & Fabrication", desc: "Precision CNC, VMC & 3D printing" },
+  { href: "/certificate-verification", label: "Verify Certificate", desc: "Instant online credential verification" },
+];
+
+const SECONDARY_LINKS = [
   { href: "/projects", label: "Projects" },
-  { href: "/certificate-verification", label: "Certificate" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -26,6 +32,21 @@ export function Navbar({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [servicesDropdown, setServicesDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isServiceActive = SERVICE_LINKS.some((s) => pathname.startsWith(s.href));
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setServicesDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -44,8 +65,57 @@ export function Navbar({
           <span className="hidden sm:inline">{businessName}</span>
         </Link>
 
+        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV_LINKS.map((link) => {
+          {PRIMARY_LINKS.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  active ? "text-primary" : "text-foreground/80 hover:text-primary"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+
+          {/* Services Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setServicesDropdown((v) => !v)}
+              className={`flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                isServiceActive ? "text-primary font-semibold" : "text-foreground/80 hover:text-primary"
+              }`}
+              aria-expanded={servicesDropdown}
+            >
+              Services
+              <ChevronDown
+                size={14}
+                className={`transition-transform duration-200 ${servicesDropdown ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {servicesDropdown && (
+              <div className="absolute left-0 mt-2 w-64 rounded-xl border border-border bg-surface p-2 shadow-xl">
+                {SERVICE_LINKS.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setServicesDropdown(false)}
+                    className="block rounded-lg p-2.5 transition-colors hover:bg-surface-2"
+                  >
+                    <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                    <p className="mt-0.5 text-xs text-muted">{item.desc}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {SECONDARY_LINKS.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
@@ -62,7 +132,7 @@ export function Navbar({
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/contact#enquiry" className="btn-primary hidden sm:inline-flex">
+          <Link href="/contact#enquiry" className="btn-outline hidden sm:inline-flex">
             Get a Quote
           </Link>
           <button
@@ -75,10 +145,37 @@ export function Navbar({
         </div>
       </div>
 
+      {/* Mobile Navigation */}
       {open && (
         <nav className="border-t border-border bg-background px-4 py-3 lg:hidden">
           <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+            {PRIMARY_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2.5 text-sm font-medium text-foreground/85 hover:bg-surface-2"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <div className="my-1 border-t border-border/60 px-3 pt-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Services</p>
+            </div>
+            {SERVICE_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2 text-sm font-medium text-foreground/85 hover:bg-surface-2"
+              >
+                {item.label}
+              </Link>
+            ))}
+
+            <div className="my-1 border-t border-border/60" />
+            {SECONDARY_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

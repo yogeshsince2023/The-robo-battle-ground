@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { startOfMonth, subMonths, format } from "date-fns";
+import { startOfMonth, startOfDay, subMonths, subDays, format } from "date-fns";
 
 export async function GET() {
   const [
@@ -80,6 +80,29 @@ export async function GET() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 8);
 
+  // Page view analytics (last 14 days)
+  const fourteenDaysAgo = startOfDay(subDays(new Date(), 13));
+  const pageViews = await prisma.pageView.findMany({
+    where: { createdAt: { gte: fourteenDaysAgo } },
+    select: { page: true, createdAt: true },
+  });
+
+  const dailyViewsMap = new Map<string, number>();
+  const topPagesMap = new Map<string, number>();
+  for (let i = 13; i >= 0; i--) {
+    dailyViewsMap.set(format(subDays(new Date(), i), "MMM dd"), 0);
+  }
+  for (const pv of pageViews) {
+    const dayKey = format(pv.createdAt, "MMM dd");
+    dailyViewsMap.set(dayKey, (dailyViewsMap.get(dayKey) || 0) + 1);
+    topPagesMap.set(pv.page, (topPagesMap.get(pv.page) || 0) + 1);
+  }
+  const dailyViews = Array.from(dailyViewsMap.entries()).map(([day, views]) => ({ day, views }));
+  const topPages = Array.from(topPagesMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([page, views]) => ({ page, views }));
+
   return NextResponse.json({
     counts: {
       arenaCount,
@@ -93,5 +116,6 @@ export async function GET() {
     finance: { totalIncome, totalExpense, balance, partnerWithdrawals },
     monthlySeries,
     recentActivity,
+    analytics: { dailyViews, topPages, totalViews: pageViews.length },
   });
 }

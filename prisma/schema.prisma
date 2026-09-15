@@ -372,3 +372,16 @@ model Quotation {
 
   @@index([financialYear])
 }
+
+// ---------- ANALYTICS (SELF-HOSTED PAGE VIEWS) ----------
+
+model PageView {
+  id        String   @id @default(cuid())
+  page      String   // e.g. "/machining"
+  referrer  String?  // document.referrer (trimmed to origin)
+  device    String?  // "desktop" | "mobile" | "tablet"
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([page])
+}

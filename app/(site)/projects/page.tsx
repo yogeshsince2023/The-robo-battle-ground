@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Bot } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Engineering Projects Portfolio — Robotics, Automation & Fabrication",
@@ -49,12 +49,21 @@ export default async function ProjectsPage() {
                 href={`/projects/${p.slug}`}
                 className="card flex flex-col hover:border-accent/50"
               >
-                <div className="mb-4 flex aspect-video items-center justify-center rounded-md border border-border bg-surface-2 text-xs text-muted">
+                <div className="mb-4 flex aspect-video items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-surface-2 to-surface">
                   {p.coverImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.coverImageUrl} alt={p.name} className="h-full w-full rounded-md object-cover" />
+                    <img
+                      src={p.coverImageUrl}
+                      alt={p.name}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
                   ) : (
-                    "Project Image"
+                    <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Bot size={22} />
+                      </span>
+                      <span className="text-xs font-semibold text-muted">{p.category}</span>
+                    </div>
                   )}
                 </div>
                 <span className="badge mb-2 w-fit border-accent/30 bg-accent/10 text-accent">{p.category}</span>
