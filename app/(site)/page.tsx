@@ -87,6 +87,16 @@ const MACHINING_STEPS = [
   { icon: Boxes, label: "Finished Product" },
 ];
 
+function getProjectCover(coverImageUrl: string | null | undefined, category: string, index = 0): string {
+  if (coverImageUrl && coverImageUrl.trim() !== "") return coverImageUrl;
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
+  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
+  if (cat.includes("automation")) return "/arena/arena-4.jpg";
+  const fallbacks = ["/arena/arena-1.jpg", "/arena/arena-3.jpg", "/arena/arena-4.jpg", "/arena/arena-2.jpg"];
+  return fallbacks[index % fallbacks.length];
+}
+
 export default async function HomePage() {
   const hero = await getHeroSettings();
   const media = await getMediaSettings();
@@ -387,26 +397,18 @@ export default async function HomePage() {
                 </Link>
               </div>
               <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {projects.map((p) => (
+                {projects.map((p, i) => (
                   <Link key={p.id} href={`/projects/${p.slug}`} className="group">
-                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-gradient-to-br from-surface-2 to-surface flex items-center justify-center">
-                      {p.coverImageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.coverImageUrl}
-                          alt={p.name}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                            <Bot size={20} />
-                          </span>
-                          <span className="rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                            {p.category}
-                          </span>
-                        </div>
-                      )}
+                    <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface-2">
+                      <Image
+                        src={getProjectCover(p.coverImageUrl, p.category, i)}
+                        alt={p.name}
+                        fill
+                        sizes="(min-width: 640px) 33vw, 50vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        quality={80}
+                      />
                     </div>
                     <p className="mt-2 truncate text-xs font-medium">{p.name}</p>
                     <p className="text-xs text-muted">{p.category}{p.year ? ` · ${p.year}` : ""}</p>

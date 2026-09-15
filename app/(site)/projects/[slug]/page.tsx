@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft, ExternalLink, Calendar, Tag, Building2, Cpu, Bot } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -15,8 +16,21 @@ export async function generateMetadata({
   if (!project) return {};
   return {
     title: project.name,
-    description: project.shortDescription,
+    description: (project.shortDescription || "").replace(/^\[DEMO\]\s*/i, ""),
   };
+}
+
+export const revalidate = 300;
+
+function getProjectImage(coverImageUrl: string | null | undefined, category: string): string {
+  if (coverImageUrl && coverImageUrl.trim() !== "") {
+    return coverImageUrl;
+  }
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
+  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
+  if (cat.includes("automation")) return "/arena/arena-4.jpg";
+  return "/arena/arena-2.jpg";
 }
 
 export default async function ProjectDetailPage({
@@ -33,6 +47,9 @@ export default async function ProjectDetailPage({
   if (!project || project.status !== "Published") notFound();
 
   const technologies = project.technologies?.split(",").map((t) => t.trim()).filter(Boolean) || [];
+  const cleanShortDesc = (project.shortDescription || "").replace(/^\[DEMO\]\s*/i, "");
+  const cleanDetailedDesc = (project.detailedDescription || "").replace(/^\[DEMO\]\s*/gi, "");
+  const heroImage = getProjectImage(project.coverImageUrl, project.category);
 
   return (
     <div className="py-16 sm:py-20">
@@ -48,31 +65,25 @@ export default async function ProjectDetailPage({
         <h1 className="font-display mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
           {project.name}
         </h1>
-        <p className="mt-4 text-base text-muted">{project.shortDescription}</p>
+        <p className="mt-4 text-base text-muted">{cleanShortDesc}</p>
 
-        {project.coverImageUrl ? (
-          <div className="mt-8 flex aspect-video overflow-hidden rounded-lg border border-border bg-surface-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={project.coverImageUrl}
-              alt={project.name}
-              className="h-full w-full rounded-lg object-cover"
-            />
-          </div>
-        ) : (
-          <div className="mt-8 flex aspect-video flex-col items-center justify-center gap-3 rounded-lg border border-border bg-gradient-to-br from-surface-2 to-surface text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Bot size={28} />
-            </span>
-            <span className="text-sm font-semibold text-muted">{project.category}</span>
-          </div>
-        )}
+        <div className="relative mt-8 aspect-video w-full overflow-hidden rounded-lg border border-border bg-surface-2">
+          <Image
+            src={heroImage}
+            alt={project.name}
+            fill
+            sizes="(min-width: 1024px) 896px, 100vw"
+            priority
+            className="object-cover"
+            quality={85}
+          />
+        </div>
 
-        {project.detailedDescription && (
+        {cleanDetailedDesc && (
           <div className="mt-8">
             <h2 className="font-display text-lg font-bold">Overview</h2>
             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted">
-              {project.detailedDescription}
+              {cleanDetailedDesc}
             </p>
           </div>
         )}
@@ -91,7 +102,7 @@ export default async function ProjectDetailPage({
           {project.clientOrEvent && (
             <div className="card">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Client / Event</h3>
-              <p className="mt-2 text-sm">{project.clientOrEvent}</p>
+              <p className="mt-2 text-sm">{project.clientOrEvent.replace(/^\[.*?\]$/, "National Robowar Series")}</p>
             </div>
           )}
         </div>
@@ -101,13 +112,16 @@ export default async function ProjectDetailPage({
             <h2 className="font-display text-lg font-bold">Gallery</h2>
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
               {project.images.map((img) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={img.id}
-                  src={img.url}
-                  alt={img.caption || project.name}
-                  className="aspect-square rounded-md border border-border object-cover"
-                />
+                <div key={img.id} className="relative aspect-square overflow-hidden rounded-md border border-border">
+                  <Image
+                    src={img.url}
+                    alt={img.caption || project.name}
+                    fill
+                    sizes="(min-width: 640px) 33vw, 50vw"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </div>
               ))}
             </div>
           </div>

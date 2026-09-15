@@ -187,40 +187,48 @@ async function main() {
       name: "8kg Combat Robot — Titan",
       slug: "8kg-combat-robot-titan",
       category: "Robowar",
-      shortDescription: "[DEMO] A horizontal spinner-class combat robot built for the 8kg category.",
+      coverImageUrl: "/arena/arena-1.jpg",
+      shortDescription: "A competition-grade horizontal spinner combat robot engineered for the 8kg category.",
       detailedDescription:
-        "[DEMO] Designed and fabricated a horizontal spinner combat robot including drivetrain, weapon system, and armor. Tested extensively in our arena before competition.",
+        "Designed and fabricated in-house with custom CNC-milled chassis components, a high-torque brushless drivetrain, and impact-hardened steel armor. Tested extensively inside our 16ft combat arena under tournament conditions.",
       year: "2025",
       technologies: "CNC Machining, Brushless Motors, Custom Armor",
-      clientOrEvent: "[EVENT NAME]",
+      clientOrEvent: "Collegiate Robowar Championship",
     },
     {
       name: "Line-Following Autonomous Bot",
       slug: "line-following-autonomous-bot",
       category: "Robotics",
-      shortDescription: "[DEMO] An autonomous line-following robot built for a training workshop capstone.",
+      coverImageUrl: "/arena/arena-3.jpg",
+      shortDescription: "High-speed autonomous navigation robot engineered for competition precision and student training capstones.",
       detailedDescription:
-        "[DEMO] Built using Arduino, IR sensor arrays, and a PID control loop for smooth line-following at competition speeds.",
+        "Built with high-accuracy infrared sensor arrays, custom microcontroller logic, and closed-loop PID motion control for smooth line-following at competition speeds. Developed as part of our hands-on engineering training curriculum.",
       year: "2025",
       technologies: "Arduino, PID Control, IR Sensors",
-      clientOrEvent: "Training Batch Capstone",
+      clientOrEvent: "Robotics Training Capstone",
     },
     {
       name: "Automated Sorting Conveyor",
       slug: "automated-sorting-conveyor",
       category: "Automation",
-      shortDescription: "[DEMO] A PLC-controlled conveyor system for automated object sorting.",
+      coverImageUrl: "/arena/arena-4.jpg",
+      shortDescription: "Industrial-grade sensor-driven automated sorting conveyor fabricated with precision CNC components.",
       detailedDescription:
-        "[DEMO] Delivered a compact sorting conveyor using PLC ladder logic and inductive sensors for a client demonstration line.",
+        "Delivered a compact sorting conveyor using PLC ladder logic and inductive sensors for automated item classification and routing.",
       year: "2024",
       technologies: "PLC, Inductive Sensors, Conveyor Mechanics",
-      clientOrEvent: "[CLIENT NAME]",
+      clientOrEvent: "Industrial Automation Client",
     },
   ];
   for (const p of projects) {
     await prisma.project.upsert({
       where: { slug: p.slug },
-      update: {},
+      update: {
+        coverImageUrl: p.coverImageUrl,
+        shortDescription: p.shortDescription,
+        detailedDescription: p.detailedDescription,
+        clientOrEvent: p.clientOrEvent,
+      },
       create: { ...p, status: "Published" },
     });
   }

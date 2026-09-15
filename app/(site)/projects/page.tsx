@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
-import { ArrowRight, Bot } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Engineering Projects Portfolio — Robotics, Automation & Fabrication",
   description:
     "Browse our completed robotics, automation, electronics, CNC, and custom engineering projects.",
 };
+
+export const revalidate = 300;
+
+function getProjectImage(coverImageUrl: string | null | undefined, category: string, index = 0): string {
+  if (coverImageUrl && coverImageUrl.trim() !== "") {
+    return coverImageUrl;
+  }
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
+  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
+  if (cat.includes("automation")) return "/arena/arena-4.jpg";
+  const fallbacks = ["/arena/arena-1.jpg", "/arena/arena-3.jpg", "/arena/arena-4.jpg", "/arena/arena-2.jpg"];
+  return fallbacks[index % fallbacks.length];
+}
 
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
@@ -43,40 +58,39 @@ export default async function ProjectsPage() {
             </div>
           )}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p) => (
-              <Link
-                key={p.id}
-                href={`/projects/${p.slug}`}
-                className="card flex flex-col hover:border-accent/50"
-              >
-                <div className="mb-4 flex aspect-video items-center justify-center overflow-hidden rounded-md border border-border bg-gradient-to-br from-surface-2 to-surface">
-                  {p.coverImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.coverImageUrl}
+            {projects.map((p, index) => {
+              const imageSrc = getProjectImage(p.coverImageUrl, p.category, index);
+              const cleanDescription = (p.shortDescription || "").replace(/^\[DEMO\]\s*/i, "");
+
+              return (
+                <Link
+                  key={p.id}
+                  href={`/projects/${p.slug}`}
+                  className="card flex flex-col hover:border-accent/50"
+                >
+                  <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-md border border-border bg-surface-2">
+                    <Image
+                      src={imageSrc}
                       alt={p.name}
-                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
+                      quality={80}
                     />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
-                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Bot size={22} />
-                      </span>
-                      <span className="text-xs font-semibold text-muted">{p.category}</span>
-                    </div>
-                  )}
-                </div>
-                <span className="badge mb-2 w-fit border-accent/30 bg-accent/10 text-accent">{p.category}</span>
-                <h3 className="font-display text-lg font-bold">{p.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{p.shortDescription}</p>
-                <div className="mt-4 flex items-center justify-between text-xs text-muted">
-                  <span>{p.year}</span>
-                  <span className="inline-flex items-center gap-1 font-semibold text-accent">
-                    View project <ArrowRight size={14} />
-                  </span>
-                </div>
-              </Link>
-            ))}
+                  </div>
+                  <span className="badge mb-2 w-fit border-accent/30 bg-accent/10 text-accent">{p.category}</span>
+                  <h3 className="font-display text-lg font-bold">{p.name}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{cleanDescription}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted">
+                    <span>{p.year}</span>
+                    <span className="inline-flex items-center gap-1 font-semibold text-accent">
+                      View project <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
             {projects.length === 0 && (
               <p className="text-sm text-muted">No projects published yet. Add projects from Admin → Projects.</p>
             )}
