@@ -116,7 +116,8 @@ export const DEFAULT_SETTINGS: {
       "We host and support Robowar events, deliver hands-on robotics and embedded systems training, and manufacture precision parts via CNC, VMC, and 3D printing.",
     capabilities:
       "Arena hosting & rental, robot testing & certification support, technical training programs, prototype and small-batch manufacturing, custom engineering fabrication.",
-    experience: "[Add company experience / history from the Admin Dashboard]",
+    experience:
+      "With extensive hands-on expertise in combat robotics and precision manufacturing, The Robo Battleground has engineered competition-grade battle arenas for 10+ college tech fests across India, mentored 50+ students in robotics design and embedded systems, and delivered custom CNC/VMC machined parts for high-performance combat bots.",
     mission:
       "At The Robo Battleground, our mission is to make robotics, engineering, and technical innovation more accessible to students, colleges, and event organizers. We provide affordable, reliable robotics arenas, technical support, practical training, and project machining services that help turn ideas into real-world projects.\n\nWe aim to create a supportive ecosystem where students can learn by doing, build with confidence, compete with passion, and develop industry-relevant technical skills.",
     vision:
@@ -154,11 +155,16 @@ export const DEFAULT_SETTINGS: {
 };
 
 export async function getSetting<T>(key: string, fallback: T): Promise<T> {
-  const row = await prisma.siteSetting.findUnique({ where: { key } });
-  if (!row) return fallback;
   try {
-    return { ...fallback, ...JSON.parse(row.value) };
-  } catch {
+    const row = await prisma.siteSetting.findUnique({ where: { key } });
+    if (!row) return fallback;
+    try {
+      return { ...fallback, ...JSON.parse(row.value) };
+    } catch {
+      return fallback;
+    }
+  } catch (err) {
+    console.error(`Failed to load setting "${key}":`, err);
     return fallback;
   }
 }
