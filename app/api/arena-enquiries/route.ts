@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       email: data.email,
       phone: data.phone,
       eventName: data.eventName || null,
-      eventDate: data.eventDate ? new Date(data.eventDate) : null,
+      eventDate: data.eventDate && !isNaN(new Date(data.eventDate).getTime()) ? new Date(data.eventDate) : null,
       participants: data.participants ?? null,
       robotCategory: data.robotCategory || null,
       expectedRobots: data.expectedRobots ?? null,

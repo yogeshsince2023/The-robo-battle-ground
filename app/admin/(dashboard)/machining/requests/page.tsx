@@ -34,12 +34,21 @@ export default function MachiningRequestsPage() {
   const [drafts, setDrafts] = useState<Record<string, Partial<Req>>>({});
 
   const load = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (statusFilter) params.set("status", statusFilter);
-    const res = await fetch(`/api/admin/machining/requests?${params.toString()}`);
-    const json = await res.json();
-    setRows(json.requests || []);
+    try {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (statusFilter) params.set("status", statusFilter);
+      const res = await fetch(`/api/admin/machining/requests?${params.toString()}`);
+      if (!res.ok) {
+        toast.error("Failed to load quotation requests.");
+        return;
+      }
+      const json = await res.json();
+      setRows(json.requests || []);
+    } catch (err: any) {
+      console.error("Failed to fetch machining requests:", err);
+      toast.error("Network error while loading requests.");
+    }
   }, [q, statusFilter]);
 
   useEffect(() => {
@@ -49,28 +58,38 @@ export default function MachiningRequestsPage() {
   async function save(id: string) {
     const patch = drafts[id];
     if (!patch) return;
-    const res = await fetch(`/api/admin/machining/requests/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
-      toast.error("Failed to save.");
-      return;
+    try {
+      const res = await fetch(`/api/admin/machining/requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error || "Failed to save.");
+        return;
+      }
+      toast.success("Saved.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save.");
     }
-    toast.success("Saved.");
-    load();
   }
 
   async function remove(id: string) {
     if (!confirm("Delete this quotation request and its files? This cannot be undone.")) return;
-    const res = await fetch(`/api/admin/machining/requests/${id}`, { method: "DELETE" });
-    if (!res.ok) {
-      toast.error("Failed to delete.");
-      return;
+    try {
+      const res = await fetch(`/api/admin/machining/requests/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error || "Failed to delete.");
+        return;
+      }
+      toast.success("Deleted.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete.");
     }
-    toast.success("Deleted.");
-    load();
   }
 
   return (

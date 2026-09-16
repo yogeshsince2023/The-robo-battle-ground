@@ -37,17 +37,29 @@ export async function saveUploadedFile(file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const supabase = getSupabase();
-  if (supabase) {
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(storedName, buffer, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
-      });
+  let uploadedToSupabase = false;
 
-    if (error) throw new Error(`Storage upload failed: ${error.message}`);
-  } else {
-    // Local fallback for development without Supabase configured
+  if (supabase) {
+    try {
+      const { error } = await supabase.storage
+        .from(BUCKET)
+        .upload(storedName, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+
+      if (!error) {
+        uploadedToSupabase = true;
+      } else {
+        console.warn(`Supabase storage upload returned error, using local fallback: ${error.message}`);
+      }
+    } catch (e: any) {
+      console.warn("Supabase storage error, using local fallback:", e?.message);
+    }
+  }
+
+  if (!uploadedToSupabase) {
+    // Local fallback for development or if Supabase storage is unreachable
     const uploadDir = path.join(process.cwd(), "private-uploads");
     await mkdir(uploadDir, { recursive: true });
     await writeFile(path.join(uploadDir, storedName), buffer);
@@ -64,13 +76,19 @@ export async function saveUploadedFile(file: File) {
 export async function readStoredFile(storedName: string): Promise<Buffer> {
   const safeName = path.basename(storedName); // prevent path traversal
   const supabase = getSupabase();
-  if (supabase) {
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .download(safeName);
 
-    if (error) throw new Error(`Storage download failed: ${error.message}`);
-    return Buffer.from(await data.arrayBuffer());
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .download(safeName);
+
+      if (!error && data) {
+        return Buffer.from(await data.arrayBuffer());
+      }
+    } catch (e: any) {
+      console.warn("Supabase download failed, checking local storage:", e?.message);
+    }
   }
 
   // Local fallback

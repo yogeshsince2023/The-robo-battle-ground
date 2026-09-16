@@ -29,7 +29,28 @@ export async function generateReferenceNumber(prefix: RefPrefix): Promise<string
     }
   };
 
-  const existing = await countForYear();
-  const seq = String(existing + 1).padStart(4, "0");
-  return `${prefix}-${year}-${seq}`;
+  const checkExists = async (ref: string) => {
+    switch (prefix) {
+      case "ARENA":
+        return prisma.arenaEnquiry.findUnique({ where: { referenceNo: ref } });
+      case "TRAIN":
+        return prisma.trainingEnquiry.findUnique({ where: { referenceNo: ref } });
+      case "MACH":
+        return prisma.machiningRequest.findUnique({ where: { referenceNo: ref } });
+      case "CONTACT":
+        return prisma.contactMessage.findUnique({ where: { referenceNo: ref } });
+    }
+  };
+
+  const existingCount = await countForYear();
+  let num = existingCount + 1;
+
+  // Verify candidate reference number is truly unused to prevent unique constraint crashes
+  while (true) {
+    const candidate = `${prefix}-${year}-${String(num).padStart(4, "0")}`;
+    const exists = await checkExists(candidate);
+    if (!exists) return candidate;
+    num++;
+  }
 }
+

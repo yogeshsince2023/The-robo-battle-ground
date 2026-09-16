@@ -33,14 +33,24 @@ export function EnquiryManager({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (statusFilter) params.set("status", statusFilter);
-    const res = await fetch(`${apiBase}?${params.toString()}`);
-    const json = await res.json();
-    const list = json.enquiries || json.requests || json.messages || [];
-    setRows(list);
-    setLoading(false);
+    try {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (statusFilter) params.set("status", statusFilter);
+      const res = await fetch(`${apiBase}?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+      const json = await res.json();
+      const list = json.enquiries || json.requests || json.messages || [];
+      setRows(list);
+    } catch (err: any) {
+      console.error(`Failed to load from ${apiBase}:`, err);
+      toast.error(err?.message || "Failed to load enquiries.");
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
   }, [apiBase, q, statusFilter]);
 
   useEffect(() => {
@@ -48,28 +58,38 @@ export function EnquiryManager({
   }, [load]);
 
   async function updateRow(id: string, patch: Record<string, unknown>) {
-    const res = await fetch(`${apiBase}/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
-      toast.error("Failed to update.");
-      return;
+    try {
+      const res = await fetch(`${apiBase}/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error || "Failed to update.");
+        return;
+      }
+      toast.success("Updated.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update.");
     }
-    toast.success("Updated.");
-    load();
   }
 
   async function deleteRow(id: string) {
     if (!confirm("Delete this record? This cannot be undone.")) return;
-    const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
-    if (!res.ok) {
-      toast.error("Failed to delete.");
-      return;
+    try {
+      const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error || "Failed to delete.");
+        return;
+      }
+      toast.success("Deleted.");
+      load();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete.");
     }
-    toast.success("Deleted.");
-    load();
   }
 
   return (
@@ -110,6 +130,11 @@ export function EnquiryManager({
           <tbody>
             {rows.map((row) => {
               const id = row.id as string;
+              const currentStatus = (row.status as string) || "NEW";
+              const effectiveStatusOptions = statusOptions.includes(currentStatus)
+                ? statusOptions
+                : [currentStatus, ...statusOptions];
+
               return (
                 <tr key={id} className="border-t border-border">
                   {columns.map((c) => (
@@ -120,10 +145,10 @@ export function EnquiryManager({
                   <td className="px-4 py-3">
                     <select
                       className="input py-1.5 text-xs"
-                      value={row.status as string}
+                      value={currentStatus}
                       onChange={(e) => updateRow(id, { status: e.target.value })}
                     >
-                      {statusOptions.map((s) => (
+                      {effectiveStatusOptions.map((s) => (
                         <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
                       ))}
                     </select>

@@ -62,6 +62,9 @@ export async function POST(req: NextRequest) {
   const data = parsed.data;
   const referenceNo = await generateReferenceNumber("MACH");
 
+  const deliveryDate = data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate) : null;
+  const safeDeliveryDate = deliveryDate && !isNaN(deliveryDate.getTime()) ? deliveryDate : null;
+
   const request_ = await prisma.machiningRequest.create({
     data: {
       referenceNo,
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
       serviceType: data.serviceType,
       material: data.material || null,
       quantity: data.quantity ?? null,
-      requiredDeliveryDate: data.requiredDeliveryDate ? new Date(data.requiredDeliveryDate) : null,
+      requiredDeliveryDate: safeDeliveryDate,
       tolerance: data.tolerance || null,
       instructions: data.instructions || null,
     },

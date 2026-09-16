@@ -12,11 +12,11 @@ export async function GET(req: NextRequest) {
       ...(q
         ? {
             OR: [
-              { studentName: { contains: q } },
-              { email: { contains: q } },
-              { phone: { contains: q } },
-              { referenceNo: { contains: q } },
-              { organization: { contains: q } },
+              { studentName: { contains: q, mode: "insensitive" as const } },
+              { email: { contains: q, mode: "insensitive" as const } },
+              { phone: { contains: q, mode: "insensitive" as const } },
+              { referenceNo: { contains: q, mode: "insensitive" as const } },
+              { organization: { contains: q, mode: "insensitive" as const } },
             ],
           }
         : {}),

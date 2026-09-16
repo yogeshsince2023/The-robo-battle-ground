@@ -15,11 +15,19 @@ export default function ContactMessagesPage() {
         { key: "email", label: "Email" },
         { key: "phone", label: "Phone" },
         { key: "subject", label: "Subject" },
-        { key: "message", label: "Message" },
+        {
+          key: "message",
+          label: "Message",
+          render: (r) => (
+            <span className="max-w-xs truncate block text-xs" title={String(r.message || "")}>
+              {String(r.message || "—")}
+            </span>
+          ),
+        },
         {
           key: "createdAt",
           label: "Received",
-          render: (r) => new Date(r.createdAt as string).toLocaleDateString(),
+          render: (r) => (r.createdAt ? new Date(r.createdAt as string).toLocaleDateString() : "—"),
         },
       ]}
     />
