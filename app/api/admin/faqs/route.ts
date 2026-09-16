@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+import { requireAdmin } from "@/lib/admin-guard";
+
 export async function GET() {
   const faqs = await prisma.faq.findMany({ orderBy: [{ category: "asc" }, { displayOrder: "asc" }] });
   return NextResponse.json({ faqs });
 }
 
 export async function POST(req: NextRequest) {
+  const { response } = await requireAdmin();
+  if (response) return response;
+
   const body = await req.json().catch(() => null);
   if (!body?.question || !body?.answer || !body?.category) {
     return NextResponse.json({ error: "Category, question and answer are required." }, { status: 400 });

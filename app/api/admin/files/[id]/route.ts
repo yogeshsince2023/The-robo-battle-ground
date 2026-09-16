@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { readStoredFile } from "@/lib/file-storage";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdmin();
+  if (response) return response;
+
   const { id } = await params;
   const file = await prisma.uploadedFile.findUnique({ where: { id } });
   if (!file) {

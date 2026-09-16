@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFile } from "@/lib/file-storage";
+import { requireAdmin } from "@/lib/admin-guard";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdmin();
+  if (response) return response;
+
   const { id } = await params;
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
@@ -26,6 +30,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { response } = await requireAdmin();
+  if (response) return response;
+
   const { id } = await params;
   const files = await prisma.uploadedFile.findMany({ where: { machiningRequestId: id } });
   for (const f of files) {

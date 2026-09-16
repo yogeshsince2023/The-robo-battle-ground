@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin-guard";
 import { startOfMonth, startOfDay, subMonths, subDays, format } from "date-fns";
 
 export async function GET() {
+  const { response } = await requireAdmin();
+  if (response) return response;
   const [
     arenaCount,
     trainingCount,
