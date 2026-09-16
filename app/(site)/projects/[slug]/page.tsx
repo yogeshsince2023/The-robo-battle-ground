@@ -22,15 +22,20 @@ export async function generateMetadata({
 
 export const revalidate = 300;
 
-function getProjectImage(coverImageUrl: string | null | undefined, category: string): string {
+function getProjectImage(coverImageUrl: string | null | undefined, category: string, slug?: string): string {
   if (coverImageUrl && coverImageUrl.trim() !== "") {
     return coverImageUrl;
   }
+  const s = (slug || "").toLowerCase();
+  if (s.includes("titan") || s.includes("8kg")) return "/projects/8Kg.jpg";
+  if (s.includes("line-follow")) return "/projects/Linefollower_BOT.jpg";
+  if (s.includes("conveyor") || s.includes("sorting")) return "/projects/coveyor_belt.jpg";
+
   const cat = (category || "").toLowerCase();
-  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
-  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
-  if (cat.includes("automation")) return "/arena/arena-4.jpg";
-  return "/arena/arena-2.jpg";
+  if (cat.includes("robowar") || cat.includes("combat")) return "/projects/8Kg.jpg";
+  if (cat.includes("robotics")) return "/projects/Linefollower_BOT.jpg";
+  if (cat.includes("automation")) return "/projects/coveyor_belt.jpg";
+  return "/projects/8Kg.jpg";
 }
 
 export default async function ProjectDetailPage({
@@ -49,7 +54,7 @@ export default async function ProjectDetailPage({
   const technologies = project.technologies?.split(",").map((t) => t.trim()).filter(Boolean) || [];
   const cleanShortDesc = (project.shortDescription || "").replace(/^\[DEMO\]\s*/i, "");
   const cleanDetailedDesc = (project.detailedDescription || "").replace(/^\[DEMO\]\s*/gi, "");
-  const heroImage = getProjectImage(project.coverImageUrl, project.category);
+  const heroImage = getProjectImage(project.coverImageUrl, project.category, project.slug);
 
   return (
     <div className="py-16 sm:py-20">

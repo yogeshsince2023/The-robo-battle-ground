@@ -187,7 +187,7 @@ async function main() {
       name: "8kg Combat Robot — Titan",
       slug: "8kg-combat-robot-titan",
       category: "Robowar",
-      coverImageUrl: "/arena/arena-1.jpg",
+      coverImageUrl: "/projects/8Kg.jpg",
       shortDescription: "A competition-grade horizontal spinner combat robot engineered for the 8kg category.",
       detailedDescription:
         "Designed and fabricated in-house with custom CNC-milled chassis components, a high-torque brushless drivetrain, and impact-hardened steel armor. Tested extensively inside our 16ft combat arena under tournament conditions.",
@@ -199,7 +199,7 @@ async function main() {
       name: "Line-Following Autonomous Bot",
       slug: "line-following-autonomous-bot",
       category: "Robotics",
-      coverImageUrl: "/arena/arena-3.jpg",
+      coverImageUrl: "/projects/Linefollower_BOT.jpg",
       shortDescription: "High-speed autonomous navigation robot engineered for competition precision and student training capstones.",
       detailedDescription:
         "Built with high-accuracy infrared sensor arrays, custom microcontroller logic, and closed-loop PID motion control for smooth line-following at competition speeds. Developed as part of our hands-on engineering training curriculum.",
@@ -211,7 +211,7 @@ async function main() {
       name: "Automated Sorting Conveyor",
       slug: "automated-sorting-conveyor",
       category: "Automation",
-      coverImageUrl: "/arena/arena-4.jpg",
+      coverImageUrl: "/projects/coveyor_belt.jpg",
       shortDescription: "Industrial-grade sensor-driven automated sorting conveyor fabricated with precision CNC components.",
       detailedDescription:
         "Delivered a compact sorting conveyor using PLC ladder logic and inductive sensors for automated item classification and routing.",

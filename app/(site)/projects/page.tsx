@@ -13,15 +13,26 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-function getProjectImage(coverImageUrl: string | null | undefined, category: string, index = 0): string {
+function getProjectImage(coverImageUrl: string | null | undefined, category: string, slug?: string, index = 0): string {
   if (coverImageUrl && coverImageUrl.trim() !== "") {
     return coverImageUrl;
   }
+  const s = (slug || "").toLowerCase();
+  if (s.includes("titan") || s.includes("8kg")) return "/projects/8Kg.jpg";
+  if (s.includes("line-follow")) return "/projects/Linefollower_BOT.jpg";
+  if (s.includes("conveyor") || s.includes("sorting")) return "/projects/coveyor_belt.jpg";
+
   const cat = (category || "").toLowerCase();
-  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
-  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
-  if (cat.includes("automation")) return "/arena/arena-4.jpg";
-  const fallbacks = ["/arena/arena-1.jpg", "/arena/arena-3.jpg", "/arena/arena-4.jpg", "/arena/arena-2.jpg"];
+  if (cat.includes("robowar") || cat.includes("combat")) return "/projects/8Kg.jpg";
+  if (cat.includes("robotics")) return "/projects/Linefollower_BOT.jpg";
+  if (cat.includes("automation")) return "/projects/coveyor_belt.jpg";
+
+  const fallbacks = [
+    "/projects/8Kg.jpg",
+    "/projects/Linefollower_BOT.jpg",
+    "/projects/coveyor_belt.jpg",
+    "/arena/arena-1.jpg",
+  ];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -59,7 +70,7 @@ export default async function ProjectsPage() {
           )}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p, index) => {
-              const imageSrc = getProjectImage(p.coverImageUrl, p.category, index);
+              const imageSrc = getProjectImage(p.coverImageUrl, p.category, p.slug, index);
               const cleanDescription = (p.shortDescription || "").replace(/^\[DEMO\]\s*/i, "");
 
               return (

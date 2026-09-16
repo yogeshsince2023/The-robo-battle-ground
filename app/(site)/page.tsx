@@ -87,13 +87,24 @@ const MACHINING_STEPS = [
   { icon: Boxes, label: "Finished Product" },
 ];
 
-function getProjectCover(coverImageUrl: string | null | undefined, category: string, index = 0): string {
+function getProjectCover(coverImageUrl: string | null | undefined, category: string, slug?: string, index = 0): string {
   if (coverImageUrl && coverImageUrl.trim() !== "") return coverImageUrl;
+  const s = (slug || "").toLowerCase();
+  if (s.includes("titan") || s.includes("8kg")) return "/projects/8Kg.jpg";
+  if (s.includes("line-follow")) return "/projects/Linefollower_BOT.jpg";
+  if (s.includes("conveyor") || s.includes("sorting")) return "/projects/coveyor_belt.jpg";
+
   const cat = (category || "").toLowerCase();
-  if (cat.includes("robowar") || cat.includes("combat")) return "/arena/arena-1.jpg";
-  if (cat.includes("robotics")) return "/arena/arena-3.jpg";
-  if (cat.includes("automation")) return "/arena/arena-4.jpg";
-  const fallbacks = ["/arena/arena-1.jpg", "/arena/arena-3.jpg", "/arena/arena-4.jpg", "/arena/arena-2.jpg"];
+  if (cat.includes("robowar") || cat.includes("combat")) return "/projects/8Kg.jpg";
+  if (cat.includes("robotics")) return "/projects/Linefollower_BOT.jpg";
+  if (cat.includes("automation")) return "/projects/coveyor_belt.jpg";
+
+  const fallbacks = [
+    "/projects/8Kg.jpg",
+    "/projects/Linefollower_BOT.jpg",
+    "/projects/coveyor_belt.jpg",
+    "/arena/arena-1.jpg",
+  ];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -401,7 +412,7 @@ export default async function HomePage() {
                   <Link key={p.id} href={`/projects/${p.slug}`} className="group">
                     <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-surface-2">
                       <Image
-                        src={getProjectCover(p.coverImageUrl, p.category, i)}
+                        src={getProjectCover(p.coverImageUrl, p.category, p.slug, i)}
                         alt={p.name}
                         fill
                         sizes="(min-width: 640px) 33vw, 50vw"
